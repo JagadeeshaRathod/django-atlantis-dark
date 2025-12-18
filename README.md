@@ -52,9 +52,9 @@ It comes with the basic components and set of pre-built pages required to lay th
 
 ## Running the Application Locally
 
-1. **Clone the repository:**
+**1. Clone the repository:**
   
-2. **Create and activate a virtual environment:**
+**2. Create and activate a virtual environment:**
    python3 -m venv venv
    source venv/bin/activate
    
@@ -62,7 +62,7 @@ It comes with the basic components and set of pre-built pages required to lay th
    pip install -r requirements.txt
 
    
-4. Apply database migrations:
+**4. Apply database migrations:**
    python3 manage.py migrate
 
 
