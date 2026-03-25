@@ -1,4 +1,4 @@
-name: Run Django Application with ngrok
+name: Run Django with ngrok
 
 on:
   push:
@@ -32,31 +32,31 @@ jobs:
           source venv/bin/activate
           python manage.py migrate --noinput
 
-      - name: Start Django development server
+      - name: Start Django server
         run: |
           source venv/bin/activate
           nohup python manage.py runserver 0.0.0.0:8000 &
           sleep 5
 
-      - name: Install ngrok
+      # ✅ Download ngrok v3 (correct version)
+      - name: Download ngrok v3
         run: |
-          wget -q -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-          unzip ngrok.zip
+          wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -O ngrok.tgz
+          tar -xvf ngrok.tgz
           chmod +x ngrok
 
+      # ✅ Authenticate ngrok v3
       - name: Authenticate ngrok
         run: |
           ./ngrok config add-authtoken 3BR12d3qQaR6GaBMdnRT1eIwvbj_3QzZ2s9k2JPnDbF8zNcqY
 
-      - name: Start ngrok tunnel on port 8000
+      # ✅ Start tunnel
+      - name: Start ngrok public URL
         run: |
-          nohup ./ngrok http 8000 --log=stdout > ngrok.log 2>&1 &
+          nohup ./ngrok http 8000 > ngrok.log 2>&1 &
           sleep 8
 
       - name: Show public ngrok URL
         run: |
-          echo "🔗 Public ngrok URL:"
-          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
-
-      - name: Check Django is running
-        run: curl -I http://localhost:8000
+          echo "🔗 Public URL:"
+          curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'https://[a-zA-Z0-9.-]*\.ngrok-free\.app'
