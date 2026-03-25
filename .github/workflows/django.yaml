@@ -1,4 +1,4 @@
-name: Run Django with ngrok
+name: Run Django with ngrok (v2 working)
 
 on:
   push:
@@ -32,35 +32,32 @@ jobs:
           source venv/bin/activate
           python manage.py migrate --noinput
 
-      - name: Start Django development server
+      - name: Start Django dev server
         run: |
           source venv/bin/activate
           nohup python manage.py runserver 0.0.0.0:8000 &
-          sleep 3
+          sleep 4
 
-      # ✅ FIXED: DOWNLOAD NGROK V3 (WORKS ON UBUNTU)
-      - name: Download ngrok v3
+      # ✅ DOWNLOAD NGROK v2 (WORKING BUILD)
+      - name: Download ngrok v2
         run: |
-          wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -O ngrok.tgz
-          tar -xzf ngrok.tgz
+          wget -q https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -O ngrok.zip
+          unzip ngrok.zip
           chmod +x ngrok
 
-      - name: Authenticate ngrok
+      - name: Auth ngrok
         run: |
           ./ngrok authtoken 3BR12d3qQaR6GaBMdnRT1eIwvbj_3QzZ2s9k2JPnDbF8zNcqY
 
       - name: Start ngrok tunnel
         run: |
-          nohup ./ngrok http 8000 --log=debug > ngrok.log 2>&1 &
-          sleep 8
+          nohup ./ngrok http 8000 > /dev/null 2>&1 &
+          sleep 6
 
-      - name: Extract Public ngrok URL
+      - name: Get public ngrok URL
         run: |
-          echo "🔍 Extracting URL..."
-          URL=$(grep -oP 'https://[a-zA-Z0-9.-]+\.ngrok-free\.app' ngrok.log | head -1)
-          echo "✅ PUBLIC URL: $URL"
+          echo "🔍 Extracting public URL..."
+          curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
 
-      - name: Show full ngrok log
-        run: |
-          echo "📄 ngrok.log content:"
-          cat ngrok.log
+      - name: Print runner IP (debug)
+        run: curl -s ifconfig.me
