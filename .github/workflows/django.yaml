@@ -38,10 +38,10 @@ jobs:
           nohup python manage.py runserver 0.0.0.0:8000 &
           sleep 3
 
+      # ✅ FIX: Download WORKING ngrok v3 (Ubuntu compatible)
       - name: Download ngrok v3
         run: |
-          wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -O ngrok.tgz
-          tar -xvf ngrok.tgz
+          wget -q https://github.com/ngrok/ngrok/releases/latest/download/ngrok-linux-amd64 -O ngrok
           chmod +x ngrok
 
       - name: Authenticate ngrok
@@ -50,13 +50,13 @@ jobs:
 
       - name: Start ngrok tunnel
         run: |
-          nohup ./ngrok http 8000 > ngrok.log 2>&1 &
-          sleep 6
+          nohup ./ngrok http 8000 --log=debug > ngrok.log 2>&1 &
+          sleep 10
 
       - name: Extract Public ngrok URL
         run: |
           echo "🔍 Extracting URL..."
-          URL=$(grep -oP 'url=https://[a-zA-Z0-9.-]+\.ngrok-free\.app' ngrok.log | head -1 | sed 's/url=//')
+          URL=$(grep -oP 'https://[a-zA-Z0-9.-]+\.ngrok-free\.app' ngrok.log | head -1)
           echo "✅ PUBLIC URL: $URL"
 
       - name: Show full ngrok log
