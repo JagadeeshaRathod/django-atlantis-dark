@@ -1,7 +1,11 @@
 name: Run Django Application
 
 on:
-  workflow_dispatch:  # Allows manual run from GitHub Actions UI
+  push:
+    branches: ["main"]    # ✅ Trigger on any push to main
+  pull_request:
+    branches: ["main"]    # ✅ Trigger on PR targeting main
+  workflow_dispatch:       # ✅ Allow manual run
 
 jobs:
   run-django:
@@ -16,7 +20,7 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Install virtual environment
+      - name: Install virtual environment and dependencies
         run: |
           python3 -m venv venv
           source venv/bin/activate
@@ -28,12 +32,13 @@ jobs:
           source venv/bin/activate
           python manage.py migrate --noinput
 
-      - name: Start Django server
+      - name: Start Django development server
         run: |
           source venv/bin/activate
           nohup python manage.py runserver 0.0.0.0:8000 &
           sleep 5
 
-      - name: Confirm server is running
+      - name: Check if Django server is running
         run: |
+          echo "Checking http://localhost:8000 ..."
           curl -I http://localhost:8000
