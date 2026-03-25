@@ -36,7 +36,7 @@ jobs:
         run: |
           source venv/bin/activate
           nohup python manage.py runserver 0.0.0.0:8000 &
-          sleep 5
+          sleep 3
 
       - name: Download ngrok v3
         run: |
@@ -51,14 +51,15 @@ jobs:
       - name: Start ngrok tunnel
         run: |
           nohup ./ngrok http 8000 > ngrok.log 2>&1 &
-          sleep 8
+          sleep 6
 
       - name: Extract Public ngrok URL
         run: |
           echo "🔍 Extracting URL..."
-          cat ngrok.log | grep -oP 'url=https://[a-zA-Z0-9.-]+\.ngrok-free\.app' | head -1 | sed 's/url=//' > public_url.txt
-          echo "✅ PUBLIC URL:"
-          cat public_url.txt
+          URL=$(grep -oP 'url=https://[a-zA-Z0-9.-]+\.ngrok-free\.app' ngrok.log | head -1 | sed 's/url=//')
+          echo "✅ PUBLIC URL: $URL"
 
-      - name: Show running processes
-        run: ps -ef | grep ngrok
+      - name: Show full ngrok log
+        run: |
+          echo "📄 ngrok.log content:"
+          cat ngrok.log
