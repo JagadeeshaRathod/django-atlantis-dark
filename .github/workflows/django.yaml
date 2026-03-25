@@ -15,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.9"
@@ -32,31 +32,33 @@ jobs:
           source venv/bin/activate
           python manage.py migrate --noinput
 
-      - name: Start Django server
+      - name: Start Django development server
         run: |
           source venv/bin/activate
           nohup python manage.py runserver 0.0.0.0:8000 &
           sleep 5
 
-      # ✅ Download ngrok v3 (correct version)
       - name: Download ngrok v3
         run: |
           wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -O ngrok.tgz
           tar -xvf ngrok.tgz
           chmod +x ngrok
 
-      # ✅ Authenticate ngrok v3
       - name: Authenticate ngrok
         run: |
           ./ngrok config add-authtoken 3BR12d3qQaR6GaBMdnRT1eIwvbj_3QzZ2s9k2JPnDbF8zNcqY
 
-      # ✅ Start tunnel
-      - name: Start ngrok public URL
+      - name: Start ngrok tunnel
         run: |
           nohup ./ngrok http 8000 > ngrok.log 2>&1 &
           sleep 8
 
-      - name: Show public ngrok URL
+      - name: Extract Public ngrok URL
         run: |
-          echo "🔗 Public URL:"
-          curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'https://[a-zA-Z0-9.-]*\.ngrok-free\.app'
+          echo "🔍 Extracting URL..."
+          cat ngrok.log | grep -oP 'url=https://[a-zA-Z0-9.-]+\.ngrok-free\.app' | head -1 | sed 's/url=//' > public_url.txt
+          echo "✅ PUBLIC URL:"
+          cat public_url.txt
+
+      - name: Show running processes
+        run: ps -ef | grep ngrok
