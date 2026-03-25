@@ -1,4 +1,4 @@
-name: Run Django with ngrok (working)
+name: Django with Cloudflare Tunnel
 
 on:
   push:
@@ -8,60 +8,48 @@ on:
 jobs:
   run-django:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_ACTIONS: "true"
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
 
-      - name: Install virtual environment and dependencies
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
 
-      - name: Apply Django migrations
-        run: |
-          source venv/bin/activate
-          python manage.py migrate --noinput
+    - name: Run migrations
+      run: |
+        source venv/bin/activate
+        python manage.py migrate --noinput
 
-      - name: Start Django dev server
-        run: |
-          source venv/bin/activate
-          nohup python manage.py runserver 0.0.0.0:8000 &
-          sleep 3
+    - name: Start Django server
+      run: |
+        source venv/bin/activate
+        nohup python manage.py runserver 0.0.0.0:8000 &
+        sleep 5
 
-      # ✅ DOWNLOAD NGROK v2 (works)
-      - name: Download ngrok v2
-        run: |
-          wget -q https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -O ngrok.zip
-          unzip ngrok.zip
-          chmod +x ngrok
+    # ✅ Install cloudflared
+    - name: Install cloudflared
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cloudflared
 
-      - name: Authenticate ngrok
-        run: |
-          ./ngrok authtoken 3BR12d3qQaR6GaBMdnRT1eIwvbj_3QzZ2s9k2JPnDbF8zNcqY
+    # ✅ Create public tunnel
+    - name: Start Cloudflare Tunnel
+      run: |
+        nohup cloudflared tunnel --url http://localhost:8000 --logfile tunnel.log &
+        sleep 6
 
-      # ✅ Start ngrok with JSON logs
-      - name: Start ngrok tunnel
-        run: |
-          nohup ./ngrok http 8000 --log=stdout --log-format=json > ngrok.log 2>&1 &
-          sleep 6
-
-      # ✅ Extract URL from JSON log reliably
-      - name: Extract Public ngrok URL
-        run: |
-          echo "🔎 Searching for URL inside ngrok.log..."
-          URL=$(grep -oP '"url":"https://[a-zA-Z0-9.-]+\.ngrok\.io"' ngrok.log | head -1 | sed 's/"url":"//;s/"//')
-          echo "✅ PUBLIC URL: $URL"
-
-      - name: Show last 20 lines of ngrok log (debug)
-        run: |
-          tail -n 20 ngrok.log
+    - name: Show tunnel URL
+      run: |
+        echo "✅ Public URL:"
+        grep -oP 'https://[-a-zA-Z0-9]+\.trycloudflare\.com' tunnel.log
+        echo "If empty, check full log below:"
+        cat tunnel.log
